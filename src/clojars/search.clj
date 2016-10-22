@@ -67,18 +67,17 @@
     (binding [clucy/*analyzer* analyzer]
       (let [[old] (try
                     (clucy/search index (format "artifact-id:%s AND group-id:%s"
-                                              (:artifact-id doc)
-                                              (:group-id doc)) 1)
+                                                (some-> doc :artifact-id (QueryParser/escape))
+                                                (some-> doc :group-id (QueryParser/escape))) 1)
                     (catch IndexNotFoundException _
                       ;; This happens when the index is searched before any data
                       ;; is added. We can treat it here as a nil return
                       ))]
         (if old
-          (when (and (< (Long. (:at old)) (:at doc))
-                     (not (re-find #"-SNAPSHOT$" (:version doc))))
+          (when (< (Long. (:at old)) (:at doc))
             (clucy/search-and-delete index (format "artifact-id:%s AND group-id:%s"
-                                                   (:artifact-id doc)
-                                                   (:group-id doc)))
+                                                   (some-> doc :artifact-id (QueryParser/escape))
+                                                   (some-> doc :group-id (QueryParser/escape))))
             (clucy/add index (with-meta doc field-settings)))
           (clucy/add index (with-meta doc field-settings)))))))
 

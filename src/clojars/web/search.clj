@@ -7,8 +7,9 @@
             [clojars.search :as search]
             [cheshire.core :as json]
             [clojars.errors :as errors]
-            [clojars.web.error-api :as error-api]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [ring.util.codec :refer [url-encode]]
+            [clojars.web.error-api :as error-api]))
 
 (defn- jar->json [jar]
   (let [m {:jar_name (:artifact-id jar)
@@ -85,7 +86,7 @@
             true (str "http://search.maven.org/#search"))))
 
 (defn html-search [search account query page]
-  (html-doc (str query " - search") {:account account :query query :description (format "Clojars search results for '%s'" query)}
+  (html-doc (str query " - search - page " page) {:account account :query query :description (format "Clojars search results page %d for '%s'" page query)}
     [:div.light-article.row
      [:h1 (format "Search for '%s'" query)]
      (when-let [mvn-tuple (on-maven-central query)]
@@ -94,6 +95,9 @@
               "."
               [:br]
               [:small "org.clojure artifacts are distributed via Maven Central instead of Clojars."]))
+     [:p.search-query-syntax "For details on the search query syntax, see the "
+      (link-to "http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax" "guide")
+      "."]
      (try
        (let [results (search/search search query page)
              {:keys [total-hits results-per-page offset]} (meta results)]
@@ -118,7 +122,7 @@
                                   [:td (format-date created)])]]])]
             (page-nav page
               (int (Math/ceil (/ total-hits results-per-page)))
-              :base-path (str "/search?q=" query "&page="))]))
+              :base-path (str "/search?q=" (url-encode query) "&page="))]))
        (catch Exception _
          [:p "Could not search; please check your query syntax."]))]))
 

@@ -236,6 +236,10 @@ footer a {
   margin: 50px 0;
 }
 
+.search-query-syntax {
+    margin-bottom: 15px;
+}
+
 #content-wrapper {
   background: white;
   margin: 0 -15px;
